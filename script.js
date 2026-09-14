@@ -1,8 +1,3 @@
-
-// ========================================
-// 地図
-// ========================================
-
 const map = L.map("map").setView(
     [37.955482, 139.338409],
     15
@@ -15,11 +10,6 @@ L.tileLayer(
         attribution: "© OpenStreetMap contributors"
     }
 ).addTo(map);
-
-
-// ========================================
-// 目的地一覧
-// ========================================
 
 const goals = [
     {
@@ -114,27 +104,14 @@ const goals = [
     }
 ];
 
-
-// ========================================
-// 使用する変数
-// ========================================
-
 // 現在地マーカー
 let currentMarker = null;
-
 // ルート
 let routeLine = null;
-
 // 現在地監視ID
 let watchId = null;
-
 // 選択中の目的地
 let currentGoal = null;
-
-
-// ========================================
-// 目的地ピン作成
-// ========================================
 
 goals.forEach(goal => {
 
@@ -143,59 +120,39 @@ goals.forEach(goal => {
         goal.lat,
         goal.lng
     ]);
-
     marker.addTo(map);
-
     // ポップアップ
     marker.bindPopup(
         `<b>${goal.name}</b><br>`
     );
-
     // ピンをクリック
     marker.on("click", () => {
-
         currentGoal = goal;
-
         startNavigation(goal);
-
     });
-
 });
-
-
-// ========================================
-// ナビ開始
-// ========================================
 
 function startNavigation(goal) {
 
     // すでに現在地の監視をしている場合は停止
     if (watchId !== null) {
-
         navigator.geolocation.clearWatch(watchId);
-
         watchId = null;
     }
 
     // GPSが使えるか確認
     if (!navigator.geolocation) {
-
         alert("この端末では現在地を取得できません。");
-
         return;
     }
 
     // 現在地を取得しながら監視
     watchId = navigator.geolocation.watchPosition(
-
         function (position) {
-
             const myLat =
                 position.coords.latitude;
-
             const myLng =
                 position.coords.longitude;
-
             // 現在地ピンを更新
             updateCurrentLocation(
                 myLat,
@@ -204,44 +161,29 @@ function startNavigation(goal) {
 
             // 最初に取得したときだけルートを表示
             if (!routeLine) {
-
                 showRoute(
                     myLat,
                     myLng,
                     goal
                 );
-
             }
-
         },
-
         function (error) {
-
             console.error(error);
-
             alert(
                 "現在地を取得できませんでした。"
             );
-
         },
-
         {
             enableHighAccuracy: true,
-
             // 位置情報の更新を待つ時間
             timeout: 10000,
-
             // 前回の位置情報を使わず、
             // 新しい位置情報を取得
             maximumAge: 0
         }
     );
 }
-
-
-// ========================================
-// 現在地ピンを更新
-// ========================================
 
 function updateCurrentLocation(
     lat,
