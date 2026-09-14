@@ -1,0 +1,80 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Yu Gothic", "Meiryo", sans-serif;
+    background: #f5f5f5;
+}
+
+
+/* ========================================
+   ヘッダー
+======================================== */
+
+header {
+    background: #25c709;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+header h1 {
+    font-size: 24px;
+}
+
+
+/* ========================================
+   情報表示
+======================================== */
+
+#info {
+    background: white;
+    padding: 15px;
+    font-size: 18px;
+    text-align: center;
+    border-bottom: 1px solid #cccccc;
+    min-height: 70px;
+}
+
+
+/* ========================================
+   地図
+======================================== */
+
+#map {
+    width: 100%;
+    height: calc(100vh - 140px);
+}
+
+
+/* ========================================
+   ポップアップ
+======================================== */
+
+.leaflet-popup-content {
+    text-align: center;
+    font-size: 16px;
+}
+
+
+/* ========================================
+   スマホ
+======================================== */
+
+@media screen and (max-width: 768px) {
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    #info {
+        font-size: 16px;
+        padding: 10px;
+    }
+
+}
+
