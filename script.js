@@ -294,7 +294,7 @@ async function showRoute(
             `
             <b>${goal.name}</b><br>
             距離：${distance} km<br>
-            徒歩での所要時間：約 ${minutes} 分
+            所要時間：約 ${minutes} 分
             `;
     }
 
