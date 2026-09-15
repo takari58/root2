@@ -1,8 +1,4 @@
-const map = L.map("map").setView(
-    [37.955482, 139.338409],
-    15
-);
-
+const map = L.map("map").setView([37.955482, 139.338409], 15);
 // OpenStreetMap
 L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -13,14 +9,9 @@ L.tileLayer(
 
 const goals = [
     {
-        name: "ウオロク",
-        lat: 37.956193588377594,
-        lng: 139.3357125780292,
-    },
-    {
-        name: "新発田城跡",
-        lat: 37.954824724542696,
-        lng: 139.326001834219947,
+        name: "新発田城跡",        //ランドマーク名称
+        lat: 37.954824724543,   //緯度
+        lng: 139.326001834219,  //経度
     },
     {
         name: "清水園",
@@ -29,13 +20,13 @@ const goals = [
     },
     {
         name: "蔵春閣",
-        lat: 37.94389807273562,
-        lng: 139.3317142467578,
+        lat: 37.9438980727356,
+        lng: 139.331714246757,
     },
     {
         name: "東公園のSL",
-        lat: 37.94367248807764,
-        lng: 139.3323475293261,
+        lat: 37.9436724880776,
+        lng: 139.332347529326,
     },
     {
         name: "諏訪神社",
@@ -80,7 +71,7 @@ const goals = [
     {
         name: "市民文化会館",
         lat: 37.951722,
-        lng: 139.326564,
+        lng:139.326564,
     },
     {
         name: "新発田歴史図書館",
@@ -100,170 +91,137 @@ const goals = [
     {
         name: "菊水",
         lat: 37.960376479226,
-        lng: 139.35429135822383
+        lng: 139.35429135822383,
+    },
+    {
+        name: "ボン・タケダ",
+        lat: 37.94039,
+        lng:139.336,
+    },
+    {
+        name: "藤倉メンチカツや",
+        lat: 37.93682,
+        lng:139.34488,
+    },
+    {
+        name: "いっぷく",
+        lat: 37.9443765405075,
+        lng:139.340743962673,
+    },
+    {
+        name: "文化洋食ino",
+        lat: 37.9623641139771,
+        lng:139.334281893588,
+    },
+    {
+        name: "やすけカレー",
+        lat:37.9377482726362,
+        lng:139.336158926512,
+    },
+    {
+        name: "レストラン蒲城",
+        lat: 37.9504968436357,
+        lng:139.339474708348,
+    },
+    {
+        name: "コーヒーマリーナ 煉瓦屋",
+        lat: 37.9491031178618,
+        lng:139.324669426051,
+    },
+    {
+        name: "パーラーやお屋",
+        lat: 37.958499803976,
+        lng:139.342528211321,
     }
 ];
 
-// 現在地マーカー
+// 使用する変数
 let currentMarker = null;
-// 現在表示されているルート
 let routeLine = null;
-// 現在地の監視ID
-let watchId = null;
-// 現在選択している目的地
-let currentGoal = null;
 
+// 目的地ピン作成
 goals.forEach(goal => {
-
-    const marker = L.marker([
-        goal.lat,
-        goal.lng
-    ]);
+    // マーカー生成
+    const marker = L.marker([goal.lat, goal.lng]);
     marker.addTo(map);
-    marker.bindPopup(
-        `<b>${goal.name}</b><br>`
-    );
 
-    // 目的地をクリック
+    // ポップアップ
+    marker.bindPopup(
+
+        `<b>${goal.name}</b><br>
+        `
+    );
+    // ピンをクリック
     marker.on("click", () => {
-        // 選択中の目的地を変更
-        currentGoal = goal;
-        // 古いルートを削除
-        removeRoute();
-        // 新しい目的地へのナビを開始
         startNavigation(goal);
     });
 });
 
-function removeRoute() {
-    if (routeLine) {
-        map.removeLayer(routeLine);
-        routeLine = null;
-    }
-}
-
+// ナビ開始
 function startNavigation(goal) {
 
-    // GPSが使えるか確認
-    if (!navigator.geolocation) {
-        alert(
-            "この端末では現在地を取得できません。"
-        );
-        return;
-    }
+    // GPS取得
+    navigator.geolocation.getCurrentPosition(
 
-    if (watchId === null) {
-        watchId =
-            navigator.geolocation.watchPosition(
-                function (position) {
-                    const myLat =
-                        position.coords.latitude;
-                    const myLng =
-                        position.coords.longitude;
-
-                    // 現在地ピンを更新
-                    updateCurrentLocation(
-                        myLat,
-                        myLng
-                    );
-
-                    // 目的地が選択されていれば
-                    if (currentGoal) {
-                        // ルートがまだない場合
-                        if (!routeLine) {
-                            showRoute(
-                                myLat,
-                                myLng,
-                                currentGoal
-                            );
-                        }
-                    }
-                },
-                function (error) {
-                    console.error(error);
-                    alert(
-                        "現在地を取得できませんでした。"
-                    );
-                },
-
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+        function (position) {
+            const myLat = position.coords.latitude;
+            const myLng = position.coords.longitude;
+            showRoute(
+                myLat,
+                myLng,
+                goal
             );
-    }
+        },
+
+        function () {
+            alert("現在地を取得できませんでした。");
+        },
+        {
+            enableHighAccuracy: true
+        }
+    );
 }
 
-function updateCurrentLocation(
-    lat,
-    lng
-) {
-
-    // 初回
-    if (!currentMarker) {
-        currentMarker =
-            L.marker([
-                lat,
-                lng
-            ])
-            .addTo(map)
-            .bindPopup("現在地");
-
-    }
-
-    // 2回目以降
-    else {
-
-        currentMarker.setLatLng([
-            lat,
-            lng
-        ]);
-    }
-}
-
+// ルート表示
 async function showRoute(
     myLat,
     myLng,
     goal
+
 ) {
 
-    removeRoute();
+    // 古い現在地マーカー削除
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    // 古いルート削除
+    if (routeLine) {
+        map.removeLayer(routeLine);
+    }
+    // 現在地マーカー
+    currentMarker = L.marker([myLat, myLng])
+        .addTo(map)
+        .bindPopup("現在地");
 
     const url =
-        `https://router.project-osrm.org/route/v1/walking/` +
-        `${myLng},${myLat};` +
-        `${goal.lng},${goal.lat}` +
-        `?overview=full&geometries=geojson`;
+`https://router.project-osrm.org/route/v1/walking/${myLng},${myLat};${goal.lng},${goal.lat}?overview=full&geometries=geojson`;
 
     try {
-        const response =
-            await fetch(url);
-        const data =
-            await response.json();
-
-        if (
-            !data.routes ||
-            data.routes.length === 0
-        ) {
-            alert(
-                "ルートが見つかりません"
-            );
-
+        const response = await fetch(url);
+        const data = await response.json();
+        // ルートが存在するか確認
+        if (!data.routes || data.routes.length === 0) {
+            alert("ルートが見つかりません");
             return;
         }
-
-        const route =
-            data.routes[0];
-
+        const route = data.routes[0];
+        // GeoJSON → Leaflet形式へ変換
         const latlngs =
-            route.geometry.coordinates.map(
-                point => [
-                    point[1],
-                    point[0]
-                ]
-            );
-
+            route.geometry.coordinates.map(point => [
+                point[1],
+                point[0]
+            ]);
+        // 青線描画
         routeLine =
             L.polyline(
                 latlngs,
@@ -273,35 +231,33 @@ async function showRoute(
                 }
             ).addTo(map);
 
+        // 地図をルート全体へ移動
         map.fitBounds(
             routeLine.getBounds()
         );
-
+        // 距離
         const distance =
-            (
-                route.distance / 1000
-            ).toFixed(2);
-        
+            (route.distance / 1000).toFixed(2);//m→kmへの変換＆小数点2位までに
+        // 時間
+        // 距離(m)
+        const distanceMeter =
+            route.distance;
+
+        // 時速4km → 1分あたり約66.67m
         const minutes =
             Math.round(
-                route.duration / 60
-            );
-
-        document.getElementById(
-            "info"
-        ).innerHTML =
-
+            distanceMeter / 66.67
+        );
+        // 情報表示
+        document.getElementById("info").innerHTML =
             `
             <b>${goal.name}</b><br>
             距離：${distance} km<br>
             所要時間：約 ${minutes} 分
             `;
     }
-
     catch (error) {
         console.error(error);
-        alert(
-            "ルート検索に失敗しました。"
-        );
+        alert("ルート検索に失敗しました。");
     }
 }
