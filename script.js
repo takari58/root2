@@ -8,11 +8,6 @@ L.tileLayer(
     }
 ).addTo(map);
 
-
-// ==============================
-// 目的地データ
-// ==============================
-
 const goals = [
     {
         name: "新発田城跡",
@@ -141,91 +136,46 @@ const goals = [
     }
 ];
 
-
-// ==============================
-// 変数
-// ==============================
-
 let currentMarker = null;
 let routeLine = null;
-
-// 現在地監視用
 let watchId = null;
-
-// 選択中の目的地
 let selectedGoal = null;
-
-// 現在地
 let currentPosition = null;
 
-
-// ==============================
-// 目的地ピン作成
-// ==============================
-
 goals.forEach(goal => {
-
     const marker = L.marker([goal.lat, goal.lng]);
-
     marker.addTo(map);
-
     marker.bindPopup(
         `<b>${goal.name}</b><br>
-        タップするとルートを表示します。`
+       `
     );
-
     marker.on("click", () => {
-
         selectedGoal = goal;
-
         startNavigation(goal);
-
     });
-
 });
 
-
-// ==============================
-// ナビ開始
-// ==============================
-
 function startNavigation(goal) {
-
     selectedGoal = goal;
-
-    // すでに現在地監視中なら再利用
     if (watchId !== null) {
-
-        // 現在地が取得済みなら
-        // すぐにルートを表示
         if (currentPosition) {
-
             showRoute(
                 currentPosition.lat,
                 currentPosition.lng,
                 goal
             );
-
         }
-
         return;
     }
 
-
-    // 現在地を継続的に監視
     watchId = navigator.geolocation.watchPosition(
-
         function (position) {
-
             const myLat =
                 position.coords.latitude;
-
             const myLng =
                 position.coords.longitude;
-
             const accuracy =
                 position.coords.accuracy;
-
 
             // 現在地を保存
             currentPosition = {
@@ -233,81 +183,48 @@ function startNavigation(goal) {
                 lng: myLng
             };
 
-
-            // ==========================
-            // 現在地ピンを移動
-            // ==========================
-
             updateCurrentMarker(
                 myLat,
                 myLng,
                 accuracy
             );
 
-
-            // ==========================
-            // 目的地が選択されていれば
-            // ルートを更新
-            // ==========================
-
             if (selectedGoal) {
-
                 showRoute(
                     myLat,
                     myLng,
                     selectedGoal
                 );
-
             }
-
         },
-
         function (error) {
-
             console.error(
                 "位置情報エラー:",
                 error
             );
-
             if (error.code === 1) {
-
                 alert(
                     "位置情報の利用が許可されていません。"
                 );
-
             } else if (error.code === 2) {
-
                 alert(
                     "現在地を取得できませんでした。"
                 );
-
             } else if (error.code === 3) {
-
                 alert(
                     "現在地の取得がタイムアウトしました。"
                 );
-
             }
-
         },
-
         {
             enableHighAccuracy: true,
 
-            // できるだけ新しい位置情報を取得
             maximumAge: 0,
 
-            // タイムアウト
             timeout: 10000
         }
     );
-
 }
-
-
-// ==============================
-// 現在地ピンを更新
-// ==============================
 
 function updateCurrentMarker(
     lat,
@@ -317,89 +234,56 @@ function updateCurrentMarker(
 
     // まだ現在地ピンがない場合
     if (!currentMarker) {
-
         currentMarker = L.marker(
             [lat, lng]
         ).addTo(map);
-
         currentMarker.bindPopup(
             "現在地"
         );
-
     }
-
     // 現在地ピンを移動
     else {
-
         currentMarker.setLatLng(
             [lat, lng]
         );
-
     }
-
 }
-
-
-// ==============================
-// ルート表示
-// ==============================
 
 async function showRoute(
     myLat,
     myLng,
     goal
 ) {
-
     const url =
         `https://router.project-osrm.org/route/v1/walking/` +
         `${myLng},${myLat};${goal.lng},${goal.lat}` +
         `?overview=full&geometries=geojson`;
 
-
     try {
-
         const response =
             await fetch(url);
-
         const data =
             await response.json();
-
 
         // ルートが存在しない
         if (
             !data.routes ||
             data.routes.length === 0
         ) {
-
             alert(
                 "ルートが見つかりません"
             );
-
             return;
-
         }
-
-
         const route =
             data.routes[0];
 
-
-        // ==========================
-        // 古いルートを削除
-        // ==========================
-
+        //旧ルート削除
         if (routeLine) {
-
             map.removeLayer(
                 routeLine
             );
-
         }
-
-
-        // ==========================
-        // GeoJSON → Leaflet
-        // ==========================
 
         const latlngs =
             route.geometry.coordinates.map(
@@ -408,11 +292,6 @@ async function showRoute(
                     point[0]
                 ]
             );
-
-
-        // ==========================
-        // 青いルートを描画
-        // ==========================
 
         routeLine =
             L.polyline(
@@ -424,34 +303,19 @@ async function showRoute(
             ).addTo(map);
 
 
-        // ==========================
-        // 距離
-        // ==========================
-
         const distance =
             (
                 route.distance / 1000
             ).toFixed(2);
 
-
-        // ==========================
-        // 徒歩時間
-        // ==========================
-
         const distanceMeter =
             route.distance;
 
-
-        // 時速4km
+        // 徒歩の所要時間計算
         const minutes =
             Math.round(
                 distanceMeter / 66.67
             );
-
-
-        // ==========================
-        // 情報表示
-        // ==========================
 
         document
             .getElementById("info")
@@ -461,15 +325,10 @@ async function showRoute(
                 所要時間：約 ${minutes} 分
             `;
 
-
     } catch (error) {
-
         console.error(error);
-
         alert(
             "ルート検索に失敗しました。"
         );
-
     }
-
 }
