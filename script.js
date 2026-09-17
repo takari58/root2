@@ -8,11 +8,6 @@ L.tileLayer(
     }
 ).addTo(map);
 
-
-// ==============================
-// 目的地データ
-// ==============================
-
 const goals = [
     {
         name: "新発田城跡",
@@ -141,39 +136,22 @@ const goals = [
     }
 ];
 
-
-// ==============================
-// 変数
-// ==============================
-
 let currentMarker = null;
 let routeLine = null;
-
 // 現在地監視用
 let watchId = null;
-
 // 選択中の目的地
 let selectedGoal = null;
-
 // 現在地
 let currentPosition = null;
 
-
-// ==============================
-// 目的地ピン作成
-// ==============================
-
 goals.forEach(goal => {
-
     const marker = L.marker([goal.lat, goal.lng]);
-
     marker.addTo(map);
-
     marker.bindPopup(
         `<b>${goal.name}</b><br>
-        タップするとルートを表示します。`
+       `
     );
-
     marker.on("click", () => {
 
         selectedGoal = goal;
