@@ -1,12 +1,7 @@
-// ========================================
-// 地図
-// ========================================
-
 const map = L.map("map").setView(
     [37.955482, 139.338409],
     15
 );
-
 
 // OpenStreetMap
 L.tileLayer(
@@ -15,11 +10,6 @@ L.tileLayer(
         attribution: "© OpenStreetMap contributors"
     }
 ).addTo(map);
-
-
-// ========================================
-// 目的地データ
-// ========================================
 
 const goals = [
     {
@@ -149,28 +139,13 @@ const goals = [
     }
 ];
 
-
-// ========================================
-// 現在地ピン用の変数
-// ========================================
-
 let currentMarker = null;
-
 let watchId = null;
-
-
-// ========================================
-// 現在地ピンの画像設定
-// ========================================
-//
-// current-location.png
-// を index.html と同じフォルダに置く
-//
 
 const currentLocationIcon = L.icon({
 
     // 現在地の画像
-    iconUrl: "current-location.png",
+    iconUrl: "current-pin.png",
 
     // 画像サイズ
     iconSize: [45, 45],
