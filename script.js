@@ -144,7 +144,7 @@ let watchId = null;
 
 const currentLocationIcon = L.icon({
 
-    iconUrl: "current-pin.png",
+    iconUrl: "./current-pin.png",
     iconSize: [45, 45],
     iconAnchor: [22.5, 22.5],
     popupAnchor: [0, -22.5]
