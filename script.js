@@ -1,4 +1,5 @@
 const map = L.map("map").setView([37.955482, 139.338409], 15);
+
 // OpenStreetMap
 L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -7,11 +8,16 @@ L.tileLayer(
     }
 ).addTo(map);
 
+
+// ==============================
+// 目的地データ
+// ==============================
+
 const goals = [
     {
-        name: "新発田城跡",        //ランドマーク名称
-        lat: 37.954824724543,   //緯度
-        lng: 139.326001834219,  //経度
+        name: "新発田城跡",
+        lat: 37.954824724543,
+        lng: 139.326001834219,
     },
     {
         name: "清水園",
@@ -71,7 +77,7 @@ const goals = [
     {
         name: "市民文化会館",
         lat: 37.951722,
-        lng:139.326564,
+        lng: 139.326564,
     },
     {
         name: "新発田歴史図書館",
@@ -96,132 +102,265 @@ const goals = [
     {
         name: "ボン・タケダ",
         lat: 37.94039,
-        lng:139.336,
+        lng: 139.336,
     },
     {
         name: "藤倉メンチカツや",
         lat: 37.93682,
-        lng:139.34488,
+        lng: 139.34488,
     },
     {
         name: "いっぷく",
         lat: 37.9443765405075,
-        lng:139.340743962673,
+        lng: 139.340743962673,
     },
     {
         name: "文化洋食ino",
         lat: 37.9623641139771,
-        lng:139.334281893588,
+        lng: 139.334281893588,
     },
     {
         name: "やすけカレー",
-        lat:37.9377482726362,
-        lng:139.336158926512,
+        lat: 37.9377482726362,
+        lng: 139.336158926512,
     },
     {
         name: "レストラン蒲城",
         lat: 37.9504968436357,
-        lng:139.339474708348,
+        lng: 139.339474708348,
     },
     {
         name: "コーヒーマリーナ 煉瓦屋",
         lat: 37.9491031178618,
-        lng:139.324669426051,
+        lng: 139.324669426051,
     },
     {
         name: "パーラーやお屋",
         lat: 37.958499803976,
-        lng:139.342528211321,
+        lng: 139.342528211321,
     }
 ];
 
-// 使用する変数
+
+// ==============================
+// 変数
+// ==============================
+
 let currentMarker = null;
 let routeLine = null;
 
+// 現在地監視用
+let watchId = null;
+
+// 選択中の目的地
+let selectedGoal = null;
+
+// 現在地
+let currentPosition = null;
+
+
+// ==============================
 // 目的地ピン作成
+// ==============================
+
 goals.forEach(goal => {
-    // マーカー生成
+
     const marker = L.marker([goal.lat, goal.lng]);
+
     marker.addTo(map);
 
-    // ポップアップ
     marker.bindPopup(
-
         `<b>${goal.name}</b><br>
-        `
+        タップするとルートを表示します。`
     );
-    // ピンをクリック
+
     marker.on("click", () => {
+
+        selectedGoal = goal;
+
         startNavigation(goal);
+
     });
+
 });
 
+
+// ==============================
 // ナビ開始
+// ==============================
+
 function startNavigation(goal) {
 
-    // GPS取得
-    navigator.geolocation.getCurrentPosition(
+    selectedGoal = goal;
 
-        function (position) {
-            const myLat = position.coords.latitude;
-            const myLng = position.coords.longitude;
+    // すでに現在地監視中なら再利用
+    if (watchId !== null) {
+
+        // 現在地が取得済みなら
+        // すぐにルートを表示
+        if (currentPosition) {
+
             showRoute(
-                myLat,
-                myLng,
+                currentPosition.lat,
+                currentPosition.lng,
                 goal
             );
+
+        }
+
+        return;
+    }
+
+
+    // 現在地を継続的に監視
+    watchId = navigator.geolocation.watchPosition(
+
+        function (position) {
+
+            const myLat =
+                position.coords.latitude;
+
+            const myLng =
+                position.coords.longitude;
+
+            const accuracy =
+                position.coords.accuracy;
+
+
+            // 現在地を保存
+            currentPosition = {
+                lat: myLat,
+                lng: myLng
+            };
+
+
+            // ==========================
+            // 現在地ピンを移動
+            // ==========================
+
+            updateCurrentMarker(
+                myLat,
+                myLng,
+                accuracy
+            );
+
+
+            // ==========================
+            // 目的地が選択されていれば
+            // ルートを更新
+            // ==========================
+
+            if (selectedGoal) {
+
+                showRoute(
+                    myLat,
+                    myLng,
+                    selectedGoal
+                );
+
+            }
+
         },
 
-        function () {
-            alert("現在地を取得できませんでした。");
+        function (error) {
+
+            console.error(
+                "位置情報エラー:",
+                error
+            );
+            if (error.code === 1) {
+                alert(
+                    "位置情報の利用が許可されていません。"
+                );
+            } else if (error.code === 2) {
+                alert(
+                    "現在地を取得できませんでした。"
+                );
+            } else if (error.code === 3) {
+                alert(
+                    "現在地の取得がタイムアウトしました。"
+                );
+            }
         },
         {
-            enableHighAccuracy: true
+            enableHighAccuracy: true,
+            // できるだけ新しい位置情報を取得
+            maximumAge: 0,
+            // タイムアウト
+            timeout: 10000
         }
     );
 }
 
-// ルート表示
+function updateCurrentMarker(
+    lat,
+    lng,
+    accuracy
+) {
+    // まだ現在地ピンがない場合
+    if (!currentMarker) {
+        currentMarker = L.marker(
+            [lat, lng]
+        ).addTo(map);
+        currentMarker.bindPopup(
+            "現在地"
+        );
+    }
+
+    // 現在地ピンを移動
+    else {
+        currentMarker.setLatLng(
+            [lat, lng]
+        );
+    }
+}
+
 async function showRoute(
     myLat,
     myLng,
     goal
-
 ) {
 
-    // 古い現在地マーカー削除
-    if (currentMarker) {
-        map.removeLayer(currentMarker);
-    }
-    // 古いルート削除
-    if (routeLine) {
-        map.removeLayer(routeLine);
-    }
-    // 現在地マーカー
-    currentMarker = L.marker([myLat, myLng])
-        .addTo(map)
-        .bindPopup("現在地");
-
     const url =
-`https://router.project-osrm.org/route/v1/walking/${myLng},${myLat};${goal.lng},${goal.lat}?overview=full&geometries=geojson`;
+        `https://router.project-osrm.org/route/v1/walking/` +
+        `${myLng},${myLat};${goal.lng},${goal.lat}` +
+        `?overview=full&geometries=geojson`;
 
     try {
-        const response = await fetch(url);
-        const data = await response.json();
-        // ルートが存在するか確認
-        if (!data.routes || data.routes.length === 0) {
-            alert("ルートが見つかりません");
+        const response =
+            await fetch(url);
+        const data =
+            await response.json();
+        // ルートが存在しない
+        if (
+            !data.routes ||
+            data.routes.length === 0
+        ) {
+            alert(
+                "ルートが見つかりません"
+            );
             return;
         }
-        const route = data.routes[0];
-        // GeoJSON → Leaflet形式へ変換
+
+        const route =
+            data.routes[0];
+
+        if (routeLine) {
+
+            map.removeLayer(
+                routeLine
+            );
+
+        }
+
         const latlngs =
-            route.geometry.coordinates.map(point => [
-                point[1],
-                point[0]
-            ]);
-        // 青線描画
+            route.geometry.coordinates.map(
+                point => [
+                    point[1],
+                    point[0]
+                ]
+            );
+
         routeLine =
             L.polyline(
                 latlngs,
@@ -231,33 +370,31 @@ async function showRoute(
                 }
             ).addTo(map);
 
-        // 地図をルート全体へ移動
-        map.fitBounds(
-            routeLine.getBounds()
-        );
-        // 距離
         const distance =
-            (route.distance / 1000).toFixed(2);//m→kmへの変換＆小数点2位までに
-        // 時間
-        // 距離(m)
+            (
+                route.distance / 1000
+            ).toFixed(2);
+
         const distanceMeter =
             route.distance;
 
-        // 時速4km → 1分あたり約66.67m
         const minutes =
             Math.round(
-            distanceMeter / 66.67
-        );
-        // 情報表示
-        document.getElementById("info").innerHTML =
-            `
-            <b>${goal.name}</b><br>
-            距離：${distance} km<br>
-            所要時間：約 ${minutes} 分
+                distanceMeter / 66.67
+            );
+
+        document
+            .getElementById("info")
+            .innerHTML = `
+                <b>${goal.name}</b><br>
+                距離：${distance} km<br>
+                所要時間：約 ${minutes} 分
             `;
-    }
-    catch (error) {
+
+    } catch (error) {
         console.error(error);
-        alert("ルート検索に失敗しました。");
+        alert(
+            "ルート検索に失敗しました。"
+        );
     }
 }
