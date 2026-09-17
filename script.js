@@ -153,68 +153,37 @@ goals.forEach(goal => {
        `
     );
     marker.on("click", () => {
-
         selectedGoal = goal;
-
         startNavigation(goal);
-
     });
-
 });
 
-
-// ==============================
-// ナビ開始
-// ==============================
-
 function startNavigation(goal) {
-
     selectedGoal = goal;
-
-    // すでに現在地監視中なら再利用
     if (watchId !== null) {
-
-        // 現在地が取得済みなら
-        // すぐにルートを表示
         if (currentPosition) {
-
             showRoute(
                 currentPosition.lat,
                 currentPosition.lng,
                 goal
             );
-
         }
-
         return;
     }
 
-
-    // 現在地を継続的に監視
     watchId = navigator.geolocation.watchPosition(
-
         function (position) {
-
             const myLat =
                 position.coords.latitude;
-
             const myLng =
                 position.coords.longitude;
-
             const accuracy =
                 position.coords.accuracy;
 
-
-            // 現在地を保存
             currentPosition = {
                 lat: myLat,
                 lng: myLng
             };
-
-
-            // ==========================
-            // 現在地ピンを移動
-            // ==========================
 
             updateCurrentMarker(
                 myLat,
@@ -222,26 +191,16 @@ function startNavigation(goal) {
                 accuracy
             );
 
-
-            // ==========================
-            // 目的地が選択されていれば
-            // ルートを更新
-            // ==========================
-
             if (selectedGoal) {
-
                 showRoute(
                     myLat,
                     myLng,
                     selectedGoal
                 );
-
             }
-
         },
 
         function (error) {
-
             console.error(
                 "位置情報エラー:",
                 error
@@ -322,15 +281,12 @@ async function showRoute(
 
         const route =
             data.routes[0];
-
         if (routeLine) {
-
             map.removeLayer(
                 routeLine
             );
-
         }
-
+        
         const latlngs =
             route.geometry.coordinates.map(
                 point => [
