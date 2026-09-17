@@ -1,4 +1,12 @@
-const map = L.map("map").setView([37.955482, 139.338409], 15);
+// ========================================
+// 地図
+// ========================================
+
+const map = L.map("map").setView(
+    [37.955482, 139.338409],
+    15
+);
+
 
 // OpenStreetMap
 L.tileLayer(
@@ -7,6 +15,11 @@ L.tileLayer(
         attribution: "© OpenStreetMap contributors"
     }
 ).addTo(map);
+
+
+// ========================================
+// 目的地データ
+// ========================================
 
 const goals = [
     {
@@ -136,199 +149,218 @@ const goals = [
     }
 ];
 
-let currentMarker = null;
-let routeLine = null;
-// 現在地監視用
-let watchId = null;
-// 選択中の目的地
-let selectedGoal = null;
-// 現在地
-let currentPosition = null;
 
-goals.forEach(goal => {
-    const marker = L.marker([goal.lat, goal.lng]);
-    marker.addTo(map);
-    marker.bindPopup(
-        `<b>${goal.name}</b><br>
-       `
-    );
-    marker.on("click", () => {
-        selectedGoal = goal;
-        startNavigation(goal);
-    });
+// ========================================
+// 現在地ピン用の変数
+// ========================================
+
+let currentMarker = null;
+
+let watchId = null;
+
+
+// ========================================
+// 現在地ピンの画像設定
+// ========================================
+//
+// current-location.png
+// を index.html と同じフォルダに置く
+//
+
+const currentLocationIcon = L.icon({
+
+    // 現在地の画像
+    iconUrl: "current-location.png",
+
+    // 画像サイズ
+    iconSize: [45, 45],
+
+    // 画像の中心を現在地に合わせる
+    iconAnchor: [22.5, 22.5],
+
+    // ポップアップの位置
+    popupAnchor: [0, -22.5]
 });
 
-function startNavigation(goal) {
-    selectedGoal = goal;
-    if (watchId !== null) {
-        if (currentPosition) {
-            showRoute(
-                currentPosition.lat,
-                currentPosition.lng,
-                goal
-            );
-        }
+
+// ========================================
+// 目的地のピンを作成
+// ========================================
+
+goals.forEach(goal => {
+
+    const marker = L.marker([
+        goal.lat,
+        goal.lng
+    ]);
+
+    marker.addTo(map);
+
+
+    // ポップアップ
+    marker.bindPopup(
+        `<b>${goal.name}</b>`
+    );
+
+});
+
+
+// ========================================
+// 現在地の監視
+// ========================================
+
+function startLocationTracking() {
+
+    // GPSが使えるか確認
+    if (!navigator.geolocation) {
+
+        document.getElementById("info").innerHTML =
+            "この端末では位置情報を利用できません。";
+
         return;
     }
 
+
+    // すでに監視している場合
+    if (watchId !== null) {
+
+        return;
+
+    }
+
+
+    // GPSを継続的に監視
     watchId = navigator.geolocation.watchPosition(
-        function (position) {
-            const myLat =
+
+        // ====================================
+        // 現在地を取得できた
+        // ====================================
+
+        function(position) {
+
+            const lat =
                 position.coords.latitude;
-            const myLng =
+
+            const lng =
                 position.coords.longitude;
-            const accuracy =
-                position.coords.accuracy;
 
-            currentPosition = {
-                lat: myLat,
-                lng: myLng
-            };
 
-            updateCurrentMarker(
-                myLat,
-                myLng,
-                accuracy
+            console.log(
+                "現在地:",
+                lat,
+                lng
             );
 
-            if (selectedGoal) {
-                showRoute(
-                    myLat,
-                    myLng,
-                    selectedGoal
+
+            // ====================================
+            // 初回
+            // ====================================
+
+            if (currentMarker === null) {
+
+                currentMarker = L.marker(
+                    [lat, lng],
+                    {
+                        icon: currentLocationIcon,
+
+                        // 目的地ピンより前面に表示
+                        zIndexOffset: 1000
+                    }
+                )
+                .addTo(map);
+
+
+                // 現在地をクリックしたとき
+                currentMarker.bindPopup(
+                    "現在地"
                 );
+
             }
+
+
+            // ====================================
+            // 2回目以降
+            // ====================================
+            // 現在地画像だけを移動
+            // ====================================
+
+            else {
+
+                currentMarker.setLatLng([
+                    lat,
+                    lng
+                ]);
+
+            }
+
         },
 
-        function (error) {
+
+        // ====================================
+        // GPS取得エラー
+        // ====================================
+
+        function(error) {
+
             console.error(
                 "位置情報エラー:",
                 error
             );
+
+
             if (error.code === 1) {
-                alert(
-                    "位置情報の利用が許可されていません。"
-                );
-            } else if (error.code === 2) {
-                alert(
-                    "現在地を取得できませんでした。"
-                );
-            } else if (error.code === 3) {
-                alert(
-                    "現在地の取得がタイムアウトしました。"
-                );
+
+                document.getElementById("info").innerHTML =
+                    "位置情報の利用を許可してください。";
+
             }
+
+            else if (error.code === 2) {
+
+                document.getElementById("info").innerHTML =
+                    "現在地を取得できませんでした。";
+
+            }
+
+            else if (error.code === 3) {
+
+                document.getElementById("info").innerHTML =
+                    "現在地の取得がタイムアウトしました。";
+
+            }
+
+            else {
+
+                document.getElementById("info").innerHTML =
+                    "現在地を取得できませんでした。";
+
+            }
+
         },
+
+
+        // ====================================
+        // GPS設定
+        // ====================================
+
         {
+            // 高精度GPS
             enableHighAccuracy: true,
-            // できるだけ新しい位置情報を取得
+
+            // 古い位置情報を使用しない
             maximumAge: 0,
-            // タイムアウト
+
+            // 10秒でタイムアウト
             timeout: 10000
         }
+
     );
+
 }
 
-function updateCurrentMarker(
-    lat,
-    lng,
-    accuracy
-) {
-    // まだ現在地ピンがない場合
-    if (!currentMarker) {
-        currentMarker = L.marker(
-            [lat, lng]
-        ).addTo(map);
-        currentMarker.bindPopup(
-            "現在地"
-        );
-    }
 
-    // 現在地ピンを移動
-    else {
-        currentMarker.setLatLng(
-            [lat, lng]
-        );
-    }
-}
+// ========================================
+// アプリ起動時に現在地監視開始
+// ========================================
 
-async function showRoute(
-    myLat,
-    myLng,
-    goal
-) {
-
-    const url =
-        `https://router.project-osrm.org/route/v1/walking/` +
-        `${myLng},${myLat};${goal.lng},${goal.lat}` +
-        `?overview=full&geometries=geojson`;
-
-    try {
-        const response =
-            await fetch(url);
-        const data =
-            await response.json();
-        // ルートが存在しない
-        if (
-            !data.routes ||
-            data.routes.length === 0
-        ) {
-            alert(
-                "ルートが見つかりません"
-            );
-            return;
-        }
-
-        const route =
-            data.routes[0];
-        if (routeLine) {
-            map.removeLayer(
-                routeLine
-            );
-        }
-        
-        const latlngs =
-            route.geometry.coordinates.map(
-                point => [
-                    point[1],
-                    point[0]
-                ]
-            );
-
-        routeLine =
-            L.polyline(
-                latlngs,
-                {
-                    color: "blue",
-                    weight: 6
-                }
-            ).addTo(map);
-
-        const distance =
-            (
-                route.distance / 1000
-            ).toFixed(2);
-
-        const distanceMeter =
-            route.distance;
-
-        const minutes =
-            Math.round(
-                distanceMeter / 66.67
-            );
-
-        document
-            .getElementById("info")
-            .innerHTML = `
-                <b>${goal.name}</b><br>
-                距離：${distance} km<br>
-                所要時間：約 ${minutes} 分
-            `;
-
-    } catch (error) {
-        console.error(error);
-        alert(
-            "ルート検索に失敗しました。"
-        );
-    }
-}
+startLocationTracking();
