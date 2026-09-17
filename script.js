@@ -144,81 +144,43 @@ let watchId = null;
 
 const currentLocationIcon = L.icon({
 
-    // 現在地の画像
     iconUrl: "current-pin.png",
-
-    // 画像サイズ
     iconSize: [45, 45],
-
-    // 画像の中心を現在地に合わせる
     iconAnchor: [22.5, 22.5],
-
-    // ポップアップの位置
     popupAnchor: [0, -22.5]
 });
 
-
-// ========================================
-// 目的地のピンを作成
-// ========================================
-
 goals.forEach(goal => {
-
     const marker = L.marker([
         goal.lat,
         goal.lng
     ]);
-
     marker.addTo(map);
-
 
     // ポップアップ
     marker.bindPopup(
         `<b>${goal.name}</b>`
     );
-
 });
 
-
-// ========================================
-// 現在地の監視
-// ========================================
-
 function startLocationTracking() {
-
     // GPSが使えるか確認
     if (!navigator.geolocation) {
-
         document.getElementById("info").innerHTML =
             "この端末では位置情報を利用できません。";
-
         return;
     }
 
-
-    // すでに監視している場合
     if (watchId !== null) {
-
         return;
-
     }
 
-
-    // GPSを継続的に監視
     watchId = navigator.geolocation.watchPosition(
-
-        // ====================================
-        // 現在地を取得できた
-        // ====================================
-
         function(position) {
-
             const lat =
                 position.coords.latitude;
-
             const lng =
                 position.coords.longitude;
-
 
             console.log(
                 "現在地:",
@@ -226,38 +188,22 @@ function startLocationTracking() {
                 lng
             );
 
-
-            // ====================================
-            // 初回
-            // ====================================
-
             if (currentMarker === null) {
-
                 currentMarker = L.marker(
                     [lat, lng],
                     {
                         icon: currentLocationIcon,
-
                         // 目的地ピンより前面に表示
                         zIndexOffset: 1000
                     }
                 )
                 .addTo(map);
 
-
                 // 現在地をクリックしたとき
                 currentMarker.bindPopup(
                     "現在地"
                 );
-
             }
-
-
-            // ====================================
-            // 2回目以降
-            // ====================================
-            // 現在地画像だけを移動
-            // ====================================
 
             else {
 
@@ -265,77 +211,46 @@ function startLocationTracking() {
                     lat,
                     lng
                 ]);
-
             }
-
         },
 
-
-        // ====================================
-        // GPS取得エラー
-        // ====================================
-
         function(error) {
-
             console.error(
                 "位置情報エラー:",
                 error
             );
 
-
             if (error.code === 1) {
-
                 document.getElementById("info").innerHTML =
                     "位置情報の利用を許可してください。";
 
             }
-
             else if (error.code === 2) {
-
                 document.getElementById("info").innerHTML =
                     "現在地を取得できませんでした。";
 
             }
-
             else if (error.code === 3) {
-
                 document.getElementById("info").innerHTML =
                     "現在地の取得がタイムアウトしました。";
 
             }
-
             else {
 
                 document.getElementById("info").innerHTML =
                     "現在地を取得できませんでした。";
-
             }
-
         },
-
-
-        // ====================================
-        // GPS設定
-        // ====================================
 
         {
             // 高精度GPS
             enableHighAccuracy: true,
-
             // 古い位置情報を使用しない
             maximumAge: 0,
-
             // 10秒でタイムアウト
             timeout: 10000
         }
-
     );
-
 }
-
-
-// ========================================
-// アプリ起動時に現在地監視開始
-// ========================================
 
 startLocationTracking();
